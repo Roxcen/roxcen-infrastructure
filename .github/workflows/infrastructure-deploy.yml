@@ -1,0 +1,214 @@
+name: Infrastructure Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'shared/**'
+      - 'modules/**'
+      - 'environments/**'
+      - 'main.tf'
+      - 'variables.tf'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+      application:
+        description: 'Application to deploy (optional)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - webapi
+          - frontend
+
+env:
+  AWS_REGION: ap-south-1
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    outputs:
+      changed-environments: ${{ steps.changes.outputs.environments }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Detect changed environments
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ inputs.application }}" ]; then
+              echo "environments=environments/${{ inputs.application }}/${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            else
+              echo "environments=." >> $GITHUB_OUTPUT
+            fi
+          else
+            # Auto-detect changes
+            CHANGED=$(git diff --name-only HEAD^ HEAD | grep -E "(shared/|modules/|environments/|main\.tf|variables\.tf)" | head -1)
+            if [[ $CHANGED == environments/* ]]; then
+              echo "environments=$(dirname $CHANGED)" >> $GITHUB_OUTPUT
+            else
+              echo "environments=." >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Plan Shared Infrastructure
+        if: contains(steps.changes.outputs.environments, '.')
+        run: |
+          terraform init
+          terraform plan -out=shared.tfplan
+
+      - name: Plan Environment Infrastructure
+        if: contains(steps.changes.outputs.environments, 'environments/')
+        run: |
+          cd ${{ steps.changes.outputs.environments }}
+          terraform init
+          terraform plan -out=env.tfplan
+
+  deploy-shared:
+    name: Deploy Shared Infrastructure
+    runs-on: ubuntu-latest
+    needs: plan
+    if: contains(needs.plan.outputs.changed-environments, '.')
+    environment: shared
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Deploy Shared Infrastructure
+        run: |
+          terraform init
+          terraform apply -auto-approve
+          
+          # Save outputs for applications
+          terraform output -json > shared-outputs.json
+
+      - name: Upload shared outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-outputs
+          path: shared-outputs.json
+
+  deploy-environment:
+    name: Deploy Environment Infrastructure
+    runs-on: ubuntu-latest
+    needs: [plan, deploy-shared]
+    if: always() && contains(needs.plan.outputs.changed-environments, 'environments/')
+    environment: ${{ contains(needs.plan.outputs.changed-environments, '/prod/') && 'production' || 'development' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Deploy Environment Infrastructure
+        run: |
+          cd ${{ needs.plan.outputs.changed-environments }}
+          terraform init
+          terraform apply -auto-approve
+          
+          # Save outputs for application deployment
+          terraform output -json > ../../../env-outputs.json
+
+      - name: Upload environment outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: env-outputs
+          path: env-outputs.json
+
+  trigger-application-deployment:
+    name: Trigger Application Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-environment]
+    if: always() && needs.deploy-environment.result == 'success'
+
+    steps:
+      - name: Extract environment and application
+        id: extract
+        run: |
+          ENV_PATH="${{ needs.plan.outputs.changed-environments }}"
+          APP=$(echo $ENV_PATH | cut -d'/' -f2)
+          ENV=$(echo $ENV_PATH | cut -d'/' -f3)
+          echo "application=$APP" >> $GITHUB_OUTPUT
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+
+      - name: Trigger WebAPI Deployment
+        if: steps.extract.outputs.application == 'webapi'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.INFRASTRUCTURE_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: 'Roxcen',
+              repo: 'webapi',
+              workflow_id: 'deploy.yml',
+              ref: 'main',
+              inputs: {
+                environment: '${{ steps.extract.outputs.environment }}',
+                infrastructure_updated: 'true'
+              }
+            });
+
+      - name: Trigger Frontend Deployment
+        if: steps.extract.outputs.application == 'frontend'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.INFRASTRUCTURE_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: 'Roxcen',
+              repo: 'hosp_business_app',
+              workflow_id: 'deploy.yml',
+              ref: 'main',
+              inputs: {
+                environment: '${{ steps.extract.outputs.environment }}',
+                infrastructure_updated: 'true'
+              }
+            });

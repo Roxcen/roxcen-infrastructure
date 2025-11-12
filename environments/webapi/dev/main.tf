@@ -4,17 +4,27 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+# Get shared infrastructure state
+data "terraform_remote_state" "shared" {
+  backend = "s3"
+  config = {
+    bucket = "roxcen-terraform-state"
+    key    = "shared/terraform.tfstate"
+    region = "ap-south-1"
+  }
+}
+
 # ECS + API Module for Development
 module "ecs_api" {
-  source = "../../modules/ecs-api"
+  source = "../../../modules/ecs-api"
 
   environment = var.environment
   project_name = var.project_name
   
-  # VPC Configuration
-  vpc_id = var.vpc_id
-  public_subnets = var.public_subnets
-  private_subnets = var.private_subnets
+  # VPC Configuration from shared infrastructure
+  vpc_id = data.terraform_remote_state.shared.outputs.vpc_id
+  public_subnets = data.terraform_remote_state.shared.outputs.public_subnet_ids
+  private_subnets = data.terraform_remote_state.shared.outputs.private_subnet_ids
   
   # ECS Configuration (Development optimized)
   ecs_task_cpu = var.ecs_task_cpu
