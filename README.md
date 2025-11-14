@@ -2,7 +2,30 @@
 
 **Complete Infrastructure-as-Code for Roxcen Healthcare Management System**
 
-This repository contains all AWS infrastructure definitions, deployment workflows, and configuration management for the Roxcen platform. It manages a cost-optimized, production-ready healthcare management system infrastructure.
+This repository contains all AWS infrastructure definitions, d### **📊 Monthly Cost Breakdown:**
+```
+ECS Fargate (512 CPU, 1GB RAM): ~$15/month
+RDS db.t3.micro (Free Tier):    $0/month
+ALB (Application Load Balancer): ~$10/month
+ECR storage (minimal):           ~$1/month
+CloudWatch logs:                 ~$2/month
+--------------------------------
+Total (24/7):                   ~$28/month ✅
+Total (with daily stop/start):   ~$15/month ✅
+Total (with weekend shutdown):   ~$12/month ✅
+```
+
+### **💰 Cost-Effective Development:**
+```bash
+# Start development environment (morning)
+./scripts/dev-environment.sh start
+
+# Stop development environment (evening) 
+./scripts/dev-environment.sh stop
+
+# Check current status and costs
+./scripts/dev-environment.sh status
+```workflows, and configuration management for the Roxcen platform. It manages a cost-optimized, production-ready healthcare management system infrastructure.
 
 ---
 
@@ -257,9 +280,11 @@ terraform show
 |----------|---------|-------------|
 | [`DEPLOYMENT_GUIDE.md`](./DEPLOYMENT_GUIDE.md) | Complete setup instructions | Initial deployment |
 | [`COST_OPTIMIZATION_GUIDE.md`](./COST_OPTIMIZATION_GUIDE.md) | Cost reduction strategies | Cost management |
+| [`COST_EFFECTIVE_DEV_MANAGEMENT.md`](./COST_EFFECTIVE_DEV_MANAGEMENT.md) | Daily start/stop procedures | Development cost control |
 | [`AWS_PERMISSIONS_ISSUE.md`](./AWS_PERMISSIONS_ISSUE.md) | IAM setup troubleshooting | Permission issues |
 | [`POSTGRES_STATUS.md`](./POSTGRES_STATUS.md) | Database configuration | Database issues |
 | [`GITHUB_SECRETS_GUIDE.md`](./GITHUB_SECRETS_GUIDE.md) | CI/CD setup | Pipeline configuration |
+| [`DEVELOPER_QUICK_REFERENCE.md`](./DEVELOPER_QUICK_REFERENCE.md) | Fast commands reference | Daily development |
 
 ---
 
