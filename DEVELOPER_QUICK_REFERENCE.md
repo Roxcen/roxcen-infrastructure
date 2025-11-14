@@ -22,6 +22,21 @@ cd environments/webapi/dev
 terraform plan && terraform apply
 ```
 
+### **Cost-Effective Development**
+```bash
+# Start dev environment (morning)
+./scripts/dev-environment.sh start
+
+# Stop dev environment (evening - saves ~$0.55/day)
+./scripts/dev-environment.sh stop
+
+# Check status and current costs
+./scripts/dev-environment.sh status
+
+# Quick health check
+./scripts/dev-environment.sh health
+```
+
 ### **Health Checks**
 ```bash
 # API health
