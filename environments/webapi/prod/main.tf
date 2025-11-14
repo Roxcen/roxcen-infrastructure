@@ -19,15 +19,11 @@ module "ecs_api" {
   source = "../../../modules/ecs-api"
 
   environment = var.environment
-  project_name = var.project_name
   
   # VPC Configuration from shared infrastructure
   vpc_id = data.terraform_remote_state.shared.outputs.vpc_id
   public_subnets = data.terraform_remote_state.shared.outputs.public_subnet_ids
-  private_subnets = data.terraform_remote_state.shared.outputs.private_subnet_ids  # ECS Configuration (Production optimized)
-  ecs_task_cpu = var.ecs_task_cpu
-  ecs_task_memory = var.ecs_task_memory
-  ecs_desired_count = var.ecs_desired_count
+  private_subnets = data.terraform_remote_state.shared.outputs.private_subnet_ids
   
   # Load Balancer
   ssl_certificate_arn = var.ssl_certificate_arn
@@ -37,10 +33,6 @@ module "ecs_api" {
   database_url_secret_arn = var.database_url_secret_arn
   redis_url_secret_arn = var.redis_url_secret_arn
   jwt_secret_arn = var.jwt_secret_arn
-  
-  tags = merge(var.tags, {
-    Environment = var.environment
-  })
 }
 
 # Production CloudWatch Alarms (Critical)

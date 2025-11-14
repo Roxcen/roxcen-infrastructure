@@ -1,6 +1,6 @@
 output "api_endpoint" {
   description = "API endpoint URL"
-  value       = "https://${var.domain_name}"
+  value       = var.ssl_certificate_arn != "" ? "https://${var.domain_name}" : "http://${module.ecs_api.load_balancer_dns}"
 }
 
 output "load_balancer_dns" {

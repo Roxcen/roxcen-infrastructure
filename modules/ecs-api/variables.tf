@@ -38,10 +38,7 @@ variable "database_url_secret_arn" {
   type        = string
 }
 
-variable "redis_url_secret_arn" {
-  description = "ARN of the secret containing Redis URL"
-  type        = string
-}
+# Redis removed for cost optimization - will use AWS SQS for background tasks
 
 variable "jwt_secret_arn" {
   description = "ARN of the secret containing JWT secret key"

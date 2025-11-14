@@ -1,6 +1,6 @@
 # Development Environment Configuration
-aws_region = "ap-south-1"
-environment = "dev"
+aws_region  = "ap-south-1"
+environment = "development"
 
 # Project Configuration
 project_name = "roxcen-hms-api"
@@ -8,30 +8,28 @@ project_name = "roxcen-hms-api"
 # Domain Configuration  
 domain_name = "dev-api.roxcen.com"
 
-# VPC Configuration (use existing VPC or create new)
-vpc_id = "vpc-xxxxxxxxxx"  # Replace with actual VPC ID
-public_subnets = ["subnet-xxxxxxxxxx", "subnet-yyyyyyyyyy"]   # Replace with actual subnet IDs
-private_subnets = ["subnet-xxxxxxxxxx", "subnet-yyyyyyyyyy"] # Replace with actual subnet IDs
+# VPC Configuration (using data sources from shared infrastructure)
+# vpc_id, subnets, and database_url_secret_arn will be fetched from shared infrastructure
+# No need to specify here - data sources will be used
 
 # ECS Configuration (Development)
-ecs_task_cpu = 512
-ecs_task_memory = 1024
+ecs_task_cpu      = 512
+ecs_task_memory   = 1024
 ecs_desired_count = 1
 
-# SSL Configuration
-ssl_certificate_arn = "arn:aws:acm:ap-south-1:ACCOUNT:certificate/cert-id"  # Replace with actual ARN
+# SSL Configuration (disabled for testing - certificate needs DNS validation)
+ssl_certificate_arn = ""
 
-# Secrets Manager ARNs
-database_url_secret_arn = "arn:aws:secretsmanager:ap-south-1:ACCOUNT:secret:dev-database-url"
-redis_url_secret_arn = "arn:aws:secretsmanager:ap-south-1:ACCOUNT:secret:dev-redis-url"
-jwt_secret_arn = "arn:aws:secretsmanager:ap-south-1:ACCOUNT:secret:jwt-secret-key"
+# Secrets Manager ARNs (using direct ARNs instead of shared infrastructure)
+# Redis removed for cost optimization - will use AWS SQS for background tasks when needed  
+jwt_secret_arn = "arn:aws:secretsmanager:ap-south-1:269010807913:secret:roxcen/development/jwt-secret-UX0PKK"
 
 # Development-specific tags
 tags = {
-  Environment = "development"
-  Purpose = "api-hosting"
-  Owner = "roxcen-dev-team"
-  AutoShutdown = "true"
-  BackupPolicy = "basic"
+  Environment     = "development"
+  Purpose         = "api-hosting"
+  Owner           = "roxcen-dev-team"
+  AutoShutdown    = "true"
+  BackupPolicy    = "basic"
   MonitoringLevel = "standard"
 }

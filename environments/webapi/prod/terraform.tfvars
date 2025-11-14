@@ -1,4 +1,6 @@
 # Production Environment Configuration
+aws_region  = "ap-south-1"
+environment = "production"roduction Environment Configuration
 aws_region = "ap-south-1"
 environment = "prod"
 

@@ -24,31 +24,34 @@ resource "aws_ecr_repository" "api_repository" {
     scan_on_push = true
   }
   
-  lifecycle_policy {
-    policy = jsonencode({
-      rules = [
-        {
-          rulePriority = 1
-          description  = "Keep last 30 release images"
-          selection = {
-            tagStatus     = "tagged"
-            tagPrefixList = ["release-"]
-            countType     = "imageCountMoreThan"
-            countNumber   = 30
-          }
-          action = {
-            type = "expire"
-          }
-        }
-      ]
-    })
-  }
-  
   tags = {
     Environment = var.environment
     Project     = "roxcen-hms"
     Component   = "api"
   }
+}
+
+# ECR Lifecycle Policy (separate resource)
+resource "aws_ecr_lifecycle_policy" "api_repository_policy" {
+  repository = aws_ecr_repository.api_repository.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep last 30 release images"
+        selection = {
+          tagStatus     = "tagged"
+          tagPrefixList = ["release-"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 30
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
 }
 
 # Application Load Balancer
@@ -95,8 +98,10 @@ resource "aws_lb_target_group" "api_tg" {
   }
 }
 
-# ALB Listener
+# ALB Listener (HTTPS - only if SSL certificate is provided)
 resource "aws_lb_listener" "api_listener" {
+  count = var.ssl_certificate_arn != "" ? 1 : 0
+  
   load_balancer_arn = aws_lb.api_alb.arn
   port              = "443"
   protocol          = "HTTPS"
@@ -109,19 +114,23 @@ resource "aws_lb_listener" "api_listener" {
   }
 }
 
-# ALB Listener for HTTP (redirect to HTTPS)
+# ALB Listener for HTTP (redirect to HTTPS if SSL enabled, otherwise forward)
 resource "aws_lb_listener" "api_listener_http" {
   load_balancer_arn = aws_lb.api_alb.arn
   port              = "80"
   protocol          = "HTTP"
   
   default_action {
-    type = "redirect"
+    type             = var.ssl_certificate_arn != "" ? "redirect" : "forward"
+    target_group_arn = var.ssl_certificate_arn != "" ? null : aws_lb_target_group.api_tg.arn
     
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
+    dynamic "redirect" {
+      for_each = var.ssl_certificate_arn != "" ? [1] : []
+      content {
+        port        = "443"
+        protocol    = "HTTPS" 
+        status_code = "HTTP_301"
+      }
     }
   }
 }
@@ -163,10 +172,6 @@ resource "aws_ecs_task_definition" "api_task" {
         {
           name      = "DATABASE_URL"
           valueFrom = var.database_url_secret_arn
-        },
-        {
-          name      = "REDIS_URL" 
-          valueFrom = var.redis_url_secret_arn
         },
         {
           name      = "JWT_SECRET_KEY"
@@ -213,8 +218,8 @@ resource "aws_ecs_service" "api_service" {
   
   network_configuration {
     security_groups  = [aws_security_group.ecs_sg.id]
-    subnets          = var.private_subnets
-    assign_public_ip = false
+    subnets          = var.environment == "development" ? var.public_subnets : var.private_subnets
+    assign_public_ip = var.environment == "development" ? true : false
   }
   
   load_balancer {
@@ -223,15 +228,9 @@ resource "aws_ecs_service" "api_service" {
     container_port   = 8000
   }
   
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
-    
-    deployment_circuit_breaker {
-      enable   = true
-      rollback = true
-    }
-  }
+  # Deployment configuration (using individual attributes for older provider compatibility)
+  # deployment_maximum_percent         = 200
+  # deployment_minimum_healthy_percent = 100
   
   depends_on = [aws_lb_listener.api_listener]
   

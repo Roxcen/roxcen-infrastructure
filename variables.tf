@@ -34,8 +34,14 @@ variable "private_subnet_cidrs" {
   default     = ["10.0.10.0/24", "10.0.20.0/24"]
 }
 
-variable "create_shared_rds" {
-  description = "Whether to create shared RDS instance"
+variable "create_dev_rds" {
+  description = "Whether to create development RDS instance"
+  type        = bool
+  default     = true
+}
+
+variable "create_prod_rds" {
+  description = "Whether to create production RDS instance"
   type        = bool
   default     = false
 }
@@ -50,12 +56,6 @@ variable "db_username" {
   description = "Database username"
   type        = string
   default     = "roxcen_admin"
-}
-
-variable "db_password" {
-  description = "Database password"
-  type        = string
-  sensitive   = true
 }
 
 variable "sns_topic_arn" {

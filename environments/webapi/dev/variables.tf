@@ -19,21 +19,6 @@ variable "domain_name" {
   type        = string
 }
 
-variable "vpc_id" {
-  description = "VPC ID"
-  type        = string
-}
-
-variable "public_subnets" {
-  description = "Public subnet IDs"
-  type        = list(string)
-}
-
-variable "private_subnets" {
-  description = "Private subnet IDs"
-  type        = list(string)
-}
-
 variable "ecs_task_cpu" {
   description = "ECS task CPU"
   type        = number
@@ -54,15 +39,7 @@ variable "ssl_certificate_arn" {
   type        = string
 }
 
-variable "database_url_secret_arn" {
-  description = "Database URL secret ARN"
-  type        = string
-}
-
-variable "redis_url_secret_arn" {
-  description = "Redis URL secret ARN"
-  type        = string
-}
+# Redis removed for cost optimization
 
 variable "jwt_secret_arn" {
   description = "JWT secret ARN"

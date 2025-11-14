@@ -67,7 +67,6 @@ resource "aws_iam_role_policy" "ecs_secrets_policy" {
         ]
         Resource = [
           var.database_url_secret_arn,
-          var.redis_url_secret_arn,
           var.jwt_secret_arn
         ]
       }
