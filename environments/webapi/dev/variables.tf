@@ -34,9 +34,16 @@ variable "ecs_desired_count" {
   type        = number
 }
 
-variable "ssl_certificate_arn" {
-  description = "SSL certificate ARN"
+variable "create_hosted_zone" {
+  description = "Whether to create a new Route53 hosted zone"
+  type        = bool
+  default     = true
+}
+
+variable "existing_hosted_zone_id" {
+  description = "Existing hosted zone ID (if not creating new one)"
   type        = string
+  default     = ""
 }
 
 # Redis removed for cost optimization

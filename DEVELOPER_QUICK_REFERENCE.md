@@ -22,20 +22,73 @@ cd environments/webapi/dev
 terraform plan && terraform apply
 ```
 
-### **Cost-Effective Development**
+## 💻 **Local Development Setup**
+
+### **Initial Local Setup (One-time):**
 ```bash
-# Start dev environment (morning)
+# Get AWS credentials and connection info
+./scripts/get-local-credentials.sh
+
+# Create .env file in webapi directory
+cd ../webapi
+cp .env.template .env
+
+# Setup Python environment
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### **Daily Local Development:**
+```bash
+# 1. Start AWS resources
 ./scripts/dev-environment.sh start
 
-# Stop dev environment (evening - saves ~$0.55/day)
+# 2. Start local application (in webapi directory)
+cd ../webapi
+source venv/bin/activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 3. Test endpoints
+curl http://localhost:8000/health
+curl http://localhost:8000/docs  # Swagger UI
+```
+
+### **Monitoring & Debugging:**
+```bash
+# View real-time CloudWatch logs
+./scripts/monitor-cloudwatch.sh tail
+
+# Check system health and metrics
+./scripts/monitor-cloudwatch.sh health
+
+# View recent errors
+./scripts/monitor-cloudwatch.sh errors
+
+# Complete system overview
+./scripts/monitor-cloudwatch.sh all
+```
+
+## 💰 **Cost-Effective Development**
+
+### **Daily Start/Stop Workflow:**
+```bash
+# Morning: Start development environment
+./scripts/dev-environment.sh start
+
+# Evening: Stop to save costs (saves ~$15-28/month)
 ./scripts/dev-environment.sh stop
 
-# Check status and current costs
+# Quick status check
 ./scripts/dev-environment.sh status
-
-# Quick health check
-./scripts/dev-environment.sh health
 ```
+
+### **Cost Savings:**
+- **With Stop/Start**: $12-15/month (78% savings)
+- **Always Running**: $28/month (71% savings) 
+- **Original Estimate**: $99/month
+
+💡 **Remember**: Always stop when not developing to maximize savings!
 
 ### **Health Checks**
 ```bash

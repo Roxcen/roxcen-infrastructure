@@ -260,8 +260,14 @@ aws rds describe-db-instances --region ap-south-1 --query 'DBInstances[0].{Statu
 
 ### **📋 Useful Scripts:**
 ```bash
-# Cost control and cleanup
-./scripts/cost-control.sh
+# Development environment management
+./scripts/dev-environment.sh {start|stop|status|health}
+
+# Local development setup  
+./scripts/get-local-credentials.sh
+
+# CloudWatch monitoring
+./scripts/monitor-cloudwatch.sh {logs|metrics|errors|health|tail|all}
 
 # Infrastructure status check  
 terraform show
@@ -320,7 +326,15 @@ terraform show
 
 ---
 
-## 👥 **Team Usage**
+## � **Complete Documentation**
+
+| Document | Purpose | Audience |
+|----------|---------|-----------|
+| **[DEVELOPER_QUICK_REFERENCE.md](DEVELOPER_QUICK_REFERENCE.md)** | Daily commands and workflows | All Developers |
+| **[LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md)** | Complete local dev setup with AWS | Developers |
+| **[COST_EFFECTIVE_DEV_MANAGEMENT.md](COST_EFFECTIVE_DEV_MANAGEMENT.md)** | Cost optimization procedures | DevOps/Leads |
+
+## �👥 **Team Usage**
 
 ### **Infrastructure Team:**
 - Modify this repository for infrastructure changes
@@ -330,12 +344,14 @@ terraform show
 ### **Development Team:**  
 - Use `webapi/` repository for application changes
 - Deploy via release branches (`release/dev`, `release/prod`)
-- Reference this repo for infrastructure understanding
+- **Local Development**: Follow [LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md)
+- **Daily Commands**: Use [DEVELOPER_QUICK_REFERENCE.md](DEVELOPER_QUICK_REFERENCE.md)
 
 ### **DevOps Team:**
 - Maintain CI/CD pipelines in both repositories
 - Monitor deployment health and performance
 - Manage secrets and security configurations
+- **Cost Management**: Implement [COST_EFFECTIVE_DEV_MANAGEMENT.md](COST_EFFECTIVE_DEV_MANAGEMENT.md)
 
 ---
 

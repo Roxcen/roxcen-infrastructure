@@ -252,3 +252,17 @@ resource "aws_cloudwatch_log_group" "api_log_group" {
     Component   = "api-logs"
   }
 }
+
+# Route53 DNS Record (A record pointing to ALB)
+resource "aws_route53_record" "api_dns" {
+  count   = var.domain_name != "" && var.hosted_zone_id != "" ? 1 : 0
+  zone_id = var.hosted_zone_id
+  name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.api_alb.dns_name
+    zone_id                = aws_lb.api_alb.zone_id
+    evaluate_target_health = true
+  }
+}

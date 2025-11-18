@@ -1,6 +1,6 @@
 output "api_endpoint" {
   description = "API endpoint URL"
-  value       = var.ssl_certificate_arn != "" ? "https://${var.domain_name}" : "http://${module.ecs_api.load_balancer_dns}"
+  value       = var.domain_name != "" ? "https://${var.domain_name}" : "http://${module.ecs_api.load_balancer_dns}"
 }
 
 output "load_balancer_dns" {
@@ -21,4 +21,19 @@ output "service_name" {
 output "ecr_repository_url" {
   description = "ECR repository URL"
   value       = module.ecs_api.ecr_repository_url
+}
+
+output "certificate_arn" {
+  description = "ARN of the SSL certificate"
+  value       = module.ssl_certificate.certificate_arn
+}
+
+output "hosted_zone_id" {
+  description = "Route53 hosted zone ID"
+  value       = module.ssl_certificate.hosted_zone_id
+}
+
+output "name_servers" {
+  description = "Route53 name servers (update your domain registrar with these)"
+  value       = module.ssl_certificate.name_servers
 }

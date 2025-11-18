@@ -14,6 +14,16 @@ data "terraform_remote_state" "shared" {
   }
 }
 
+# SSL Certificate and Route53 Setup
+module "ssl_certificate" {
+  source = "../../../modules/ssl-certificate"
+
+  domain_name         = var.domain_name
+  environment         = var.environment
+  create_hosted_zone  = var.create_hosted_zone
+  existing_hosted_zone_id = var.existing_hosted_zone_id
+}
+
 # ECS + API Module for Development
 module "ecs_api" {
   source = "../../../modules/ecs-api"
@@ -25,13 +35,16 @@ module "ecs_api" {
   public_subnets  = data.terraform_remote_state.shared.outputs.public_subnet_ids
   private_subnets = data.terraform_remote_state.shared.outputs.private_subnet_ids
 
-  # Load Balancer
-  ssl_certificate_arn = var.ssl_certificate_arn
+  # SSL and Domain Configuration
+  ssl_certificate_arn = module.ssl_certificate.certificate_arn
   domain_name         = var.domain_name
+  hosted_zone_id      = module.ssl_certificate.hosted_zone_id
 
   # Database Configuration
   database_url_secret_arn = "arn:aws:secretsmanager:ap-south-1:269010807913:secret:roxcen/development/database-url-5IRWLW"
   jwt_secret_arn          = var.jwt_secret_arn
+
+  depends_on = [module.ssl_certificate]
 }
 
 # Development-specific CloudWatch alarms (non-critical)
