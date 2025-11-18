@@ -1,35 +1,24 @@
-# Development Environment Configuration
-aws_region  = "ap-south-1"
-environment = "development"
+# Development Environment Variables
+environment    = "development"
+project_name   = "roxcen-hms"
+aws_region     = "ap-south-1"
 
-# Project Configuration
-project_name = "roxcen-hms-api"
+# Domain Configuration
+domain_name = "api-dev.roxcen.com"  # Development API subdomain
+create_hosted_zone = true  # Set to false if you already have a hosted zone
 
-# Domain Configuration  
-domain_name = "dev-api.roxcen.com"
+# ECS Configuration
+ecs_task_cpu       = 512
+ecs_task_memory    = 1024
+ecs_desired_count  = 1
 
-# VPC Configuration (using data sources from shared infrastructure)
-# vpc_id, subnets, and database_url_secret_arn will be fetched from shared infrastructure
-# No need to specify here - data sources will be used
-
-# ECS Configuration (Development)
-ecs_task_cpu      = 512
-ecs_task_memory   = 1024
-ecs_desired_count = 1
-
-# SSL Configuration (disabled for testing - certificate needs DNS validation)
-ssl_certificate_arn = ""
-
-# Secrets Manager ARNs (using direct ARNs instead of shared infrastructure)
-# Redis removed for cost optimization - will use AWS SQS for background tasks when needed  
+# Secrets Configuration
 jwt_secret_arn = "arn:aws:secretsmanager:ap-south-1:269010807913:secret:roxcen/development/jwt-secret-UX0PKK"
 
-# Development-specific tags
+# Tags
 tags = {
-  Environment     = "development"
-  Purpose         = "api-hosting"
-  Owner           = "roxcen-dev-team"
-  AutoShutdown    = "true"
-  BackupPolicy    = "basic"
-  MonitoringLevel = "standard"
+  Environment = "development"
+  Project     = "roxcen-hms"
+  Component   = "webapi"
+  Owner       = "roxcen-team"
 }
