@@ -165,7 +165,25 @@ EOF
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
-    - name: 🔧 Configure AWS credentials
+    - name: � Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 🗄️ Run Database Migrations (Alembic)
+      env:
+        DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+      run: |
+        echo "Installing dependencies for migrations..."
+        pip install alembic psycopg2-binary sqlalchemy python-dotenv
+        pip install -r requirements.txt
+        
+        echo "Running Alembic migrations for Development..."
+        alembic upgrade head
+        
+        echo "✅ Database migrations completed successfully"
+
+    - name: �🔧 Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -235,7 +253,25 @@ EOF
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
-    - name: 🔧 Configure AWS credentials
+    - name: � Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 🗄️ Run Database Migrations (Alembic) for Production
+      env:
+        DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      run: |
+        echo "Installing dependencies for migrations..."
+        pip install alembic psycopg2-binary sqlalchemy python-dotenv
+        pip install -r requirements.txt
+        
+        echo "Running Alembic migrations for Production..."
+        alembic upgrade head
+        
+        echo "✅ Production database migrations completed successfully"
+
+    - name: �🔧 Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
