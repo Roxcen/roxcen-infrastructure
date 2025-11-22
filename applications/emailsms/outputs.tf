@@ -41,9 +41,9 @@ output "sms_dlq_url" {
 output "cloudwatch_log_groups" {
   description = "CloudWatch log groups"
   value = {
-    api_gateway = aws_cloudwatch_log_group.api_logs.name
-    lambda_api  = aws_cloudwatch_log_group.lambda_api_logs.name
-    lambda_worker = aws_cloudwatch_log_group.lambda_worker_logs.name
+    api_gateway   = aws_cloudwatch_log_group.api_logs.name
+    lambda_api    = "/aws/lambda/${aws_lambda_function.emailsms_api.function_name}"
+    lambda_worker = "/aws/lambda/${aws_lambda_function.emailsms_worker.function_name}"
   }
 }
 
