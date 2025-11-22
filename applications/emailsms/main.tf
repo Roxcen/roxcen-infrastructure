@@ -244,6 +244,10 @@ resource "aws_cloudwatch_log_group" "api_logs" {
 
 # Lambda CloudWatch log groups are automatically created by AWS Lambda
 # No need to manage them explicitly in Terraform
+
+# IAM Role for Lambda
+resource "aws_iam_role" "lambda_role" {
+  name = "${local.name_prefix}-lambda-role"
   
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
