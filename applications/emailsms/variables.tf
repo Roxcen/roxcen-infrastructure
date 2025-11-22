@@ -14,10 +14,10 @@ variable "project_name" {
 variable "environment" {
   description = "Environment name"
   type        = string
-    # validation {
-    #   condition     = contains(["development", "production"], var.environment)
-    #   error_message = "Environment must be either 'development' or 'production'."
-    # }
+  # validation {
+  #   condition     = contains(["development", "production"], var.environment)
+  #   error_message = "Environment must be either 'development' or 'production'."
+  # }
 }
 
 variable "database_url" {
