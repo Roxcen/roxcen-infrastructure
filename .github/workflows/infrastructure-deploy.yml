@@ -124,6 +124,7 @@ jobs:
         with:
           name: shared-outputs
           path: shared-outputs.json
+          retention-days: 3
 
   deploy-environment:
     name: Deploy Environment Infrastructure
@@ -162,6 +163,7 @@ jobs:
         with:
           name: env-outputs
           path: env-outputs.json
+          retention-days: 3
 
   trigger-application-deployment:
     name: Trigger Application Deployment
