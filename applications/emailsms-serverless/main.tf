@@ -70,9 +70,14 @@ resource "aws_lambda_function" "emailsms_api" {
   
   environment {
     variables = {
-      ENVIRONMENT    = var.environment
-      DATABASE_URL   = var.database_url
-      REDIS_URL      = var.redis_url
+      ENVIRONMENT           = var.environment
+      DATABASE_URL          = var.database_url
+      REDIS_URL            = var.redis_url
+      SENDGRID_API_KEY     = var.sendgrid_api_key
+      TWILIO_ACCOUNT_SID   = var.twilio_account_sid
+      TWILIO_AUTH_TOKEN    = var.twilio_auth_token
+      TWILIO_PHONE_NUMBER  = var.twilio_phone_number
+      SECRET_KEY           = var.jwt_secret_key
     }
   }
   
@@ -96,9 +101,14 @@ resource "aws_lambda_function" "emailsms_worker" {
   
   environment {
     variables = {
-      ENVIRONMENT    = var.environment
-      DATABASE_URL   = var.database_url
-      REDIS_URL      = var.redis_url
+      ENVIRONMENT           = var.environment
+      DATABASE_URL          = var.database_url
+      REDIS_URL            = var.redis_url
+      SENDGRID_API_KEY     = var.sendgrid_api_key
+      TWILIO_ACCOUNT_SID   = var.twilio_account_sid
+      TWILIO_AUTH_TOKEN    = var.twilio_auth_token
+      TWILIO_PHONE_NUMBER  = var.twilio_phone_number
+      SECRET_KEY           = var.jwt_secret_key
     }
   }
   
@@ -383,18 +393,6 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "ses:SendRawEmail"
         ]
         Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Resource = [
-          var.sendgrid_secret_arn,
-          var.twilio_sid_secret_arn,
-          var.twilio_token_secret_arn,
-          var.jwt_secret_arn
-        ]
       }
     ]
   })
