@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.0"
+    }
   }
   
   backend "s3" {
@@ -55,7 +59,7 @@ locals {
 
 # Lambda function for API endpoints
 resource "aws_lambda_function" "emailsms_api" {
-  filename         = "emailsms_lambda.zip"
+  filename         = "lambda_placeholder.zip"
   function_name    = "${local.name_prefix}-api"
   role            = aws_iam_role.lambda_role.arn
   handler         = "main.lambda_handler"
@@ -86,7 +90,7 @@ resource "aws_lambda_function" "emailsms_api" {
 
 # Lambda function for background queue processing
 resource "aws_lambda_function" "emailsms_worker" {
-  filename         = "emailsms_worker.zip"
+  filename         = "lambda_placeholder.zip"
   function_name    = "${local.name_prefix}-worker"
   role            = aws_iam_role.lambda_role.arn
   handler         = "worker.lambda_handler"
