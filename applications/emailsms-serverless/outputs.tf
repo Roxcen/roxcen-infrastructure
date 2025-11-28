@@ -1,4 +1,4 @@
-# Output values for EmailSMS Serverless Infrastructure
+# Output values for EmailSMS API-Only Serverless Infrastructure
 
 output "api_url" {
   description = "API Gateway endpoint URL"
@@ -20,37 +20,11 @@ output "lambda_api_function_name" {
   value       = aws_lambda_function.emailsms_api.function_name
 }
 
-output "lambda_worker_function_name" {
-  description = "Lambda worker function name"
-  value       = aws_lambda_function.emailsms_worker.function_name
-}
-
-output "email_queue_url" {
-  description = "SQS Email queue URL"
-  value       = aws_sqs_queue.email_queue.url
-}
-
-output "sms_queue_url" {
-  description = "SQS SMS queue URL"
-  value       = aws_sqs_queue.sms_queue.url
-}
-
-output "email_dlq_url" {
-  description = "Email Dead Letter Queue URL"
-  value       = aws_sqs_queue.email_dlq.url
-}
-
-output "sms_dlq_url" {
-  description = "SMS Dead Letter Queue URL"
-  value       = aws_sqs_queue.sms_dlq.url
-}
-
 output "cloudwatch_log_groups" {
   description = "CloudWatch log groups"
   value = {
-    api_gateway   = aws_cloudwatch_log_group.api_logs.name
-    lambda_api    = "/aws/lambda/${aws_lambda_function.emailsms_api.function_name}"
-    lambda_worker = "/aws/lambda/${aws_lambda_function.emailsms_worker.function_name}"
+    api_gateway = aws_cloudwatch_log_group.api_logs.name
+    lambda_api  = "/aws/lambda/${aws_lambda_function.emailsms_api.function_name}"
   }
 }
 

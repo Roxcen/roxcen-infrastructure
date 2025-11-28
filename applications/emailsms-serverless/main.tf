@@ -88,37 +88,6 @@ resource "aws_lambda_function" "emailsms_api" {
   tags = local.common_tags
 }
 
-# Lambda function for background queue processing
-resource "aws_lambda_function" "emailsms_worker" {
-  filename         = "lambda_placeholder.zip"
-  function_name    = "${local.name_prefix}-worker"
-  role            = aws_iam_role.lambda_role.arn
-  handler         = "worker.lambda_handler"
-  runtime         = "python3.11"
-  timeout         = 900  # 15 minutes max for background processing
-  memory_size     = 1024
-  
-  vpc_config {
-    subnet_ids         = local.private_subnet_ids
-    security_group_ids = [aws_security_group.lambda.id]
-  }
-  
-  environment {
-    variables = {
-      ENVIRONMENT           = var.environment
-      DATABASE_URL          = var.database_url
-      REDIS_URL            = var.redis_url
-      SENDGRID_API_KEY     = var.sendgrid_api_key
-      TWILIO_ACCOUNT_SID   = var.twilio_account_sid
-      TWILIO_AUTH_TOKEN    = var.twilio_auth_token
-      TWILIO_PHONE_NUMBER  = var.twilio_phone_number
-      SECRET_KEY           = var.jwt_secret_key
-    }
-  }
-  
-  tags = local.common_tags
-}
-
 # API Gateway v2 (HTTP API - cheaper than REST API)
 resource "aws_apigatewayv2_api" "emailsms" {
   name          = local.name_prefix
@@ -183,91 +152,8 @@ resource "aws_lambda_permission" "api_gateway" {
   source_arn    = "${aws_apigatewayv2_api.emailsms.execution_arn}/*/*"
 }
 
-# SQS Queue for email processing
-resource "aws_sqs_queue" "email_queue" {
-  name                      = "${local.name_prefix}-email-queue"
-  delay_seconds             = 0
-  max_message_size          = 262144
-  message_retention_seconds = 1209600  # 14 days
-  visibility_timeout_seconds = 900      # 15 minutes
-  
-  redrive_policy = jsonencode({
-    deadLetterTargetArn = aws_sqs_queue.email_dlq.arn
-    maxReceiveCount     = 3
-  })
-  
-  tags = local.common_tags
-}
-
-# Dead Letter Queue for failed emails
-resource "aws_sqs_queue" "email_dlq" {
-  name = "${local.name_prefix}-email-dlq"
-  tags = local.common_tags
-}
-
-# SQS Queue for SMS processing
-resource "aws_sqs_queue" "sms_queue" {
-  name                      = "${local.name_prefix}-sms-queue"
-  delay_seconds             = 0
-  max_message_size          = 262144
-  message_retention_seconds = 1209600
-  visibility_timeout_seconds = 900
-  
-  redrive_policy = jsonencode({
-    deadLetterTargetArn = aws_sqs_queue.sms_dlq.arn
-    maxReceiveCount     = 3
-  })
-  
-  tags = local.common_tags
-}
-
-# Dead Letter Queue for failed SMS
-resource "aws_sqs_queue" "sms_dlq" {
-  name = "${local.name_prefix}-sms-dlq"
-  tags = local.common_tags
-}
-
-# Lambda trigger for email queue
-resource "aws_lambda_event_source_mapping" "email_queue" {
-  event_source_arn = aws_sqs_queue.email_queue.arn
-  function_name    = aws_lambda_function.emailsms_worker.arn
-  batch_size       = 10
-}
-
-# Lambda trigger for SMS queue
-resource "aws_lambda_event_source_mapping" "sms_queue" {
-  event_source_arn = aws_sqs_queue.sms_queue.arn
-  function_name    = aws_lambda_function.emailsms_worker.arn
-  batch_size       = 10
-}
-
-# EventBridge for scheduled tasks (optional)
-resource "aws_cloudwatch_event_rule" "cleanup_schedule" {
-  name                = "${local.name_prefix}-cleanup"
-  description         = "Cleanup old messages and logs"
-  schedule_expression = "rate(1 day)"
-  
-  tags = local.common_tags
-}
-
-resource "aws_cloudwatch_event_target" "cleanup_lambda" {
-  rule      = aws_cloudwatch_event_rule.cleanup_schedule.name
-  target_id = "CleanupTarget"
-  arn       = aws_lambda_function.emailsms_worker.arn
-  
-  input = jsonencode({
-    task = "cleanup"
-  })
-}
-
-# Lambda permission for EventBridge
-resource "aws_lambda_permission" "eventbridge" {
-  statement_id  = "AllowExecutionFromEventBridge"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.emailsms_worker.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.cleanup_schedule.arn
-}
+# API-only architecture - no background processing needed
+# Emails and SMS will be sent directly from the API Lambda function
 
 # CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "api_logs" {
@@ -278,12 +164,6 @@ resource "aws_cloudwatch_log_group" "api_logs" {
 
 resource "aws_cloudwatch_log_group" "lambda_api_logs" {
   name              = "/aws/lambda/${aws_lambda_function.emailsms_api.function_name}"
-  retention_in_days = var.environment == "production" ? 30 : 7
-  tags              = local.common_tags
-}
-
-resource "aws_cloudwatch_log_group" "lambda_worker_logs" {
-  name              = "/aws/lambda/${aws_lambda_function.emailsms_worker.function_name}"
   retention_in_days = var.environment == "production" ? 30 : 7
   tags              = local.common_tags
 }
@@ -374,21 +254,6 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "ec2:DeleteNetworkInterface"
         ]
         Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "sqs:ReceiveMessage",
-          "sqs:DeleteMessage",
-          "sqs:GetQueueAttributes",
-          "sqs:SendMessage"
-        ]
-        Resource = [
-          aws_sqs_queue.email_queue.arn,
-          aws_sqs_queue.sms_queue.arn,
-          aws_sqs_queue.email_dlq.arn,
-          aws_sqs_queue.sms_dlq.arn
-        ]
       },
       {
         Effect = "Allow"
