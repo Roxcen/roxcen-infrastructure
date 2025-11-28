@@ -292,6 +292,29 @@ resource "aws_security_group" "lambda" {
   })
 }
 
+# Security Group Rule to allow Lambda access to RDS
+resource "aws_security_group_rule" "lambda_to_rds" {
+  count                    = var.environment == "development" ? 1 : 0
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lambda.id
+  security_group_id        = data.terraform_remote_state.shared.outputs.dev_rds_security_group_id
+  description              = "Allow Lambda access to Development PostgreSQL RDS"
+}
+
+resource "aws_security_group_rule" "lambda_to_rds_prod" {
+  count                    = var.environment == "production" ? 1 : 0
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lambda.id
+  security_group_id        = data.terraform_remote_state.shared.outputs.prod_rds_security_group_id
+  description              = "Allow Lambda access to Production PostgreSQL RDS"
+}
+
 # IAM Role for Lambda
 resource "aws_iam_role" "lambda_role" {
   name = "${local.name_prefix}-lambda-role"

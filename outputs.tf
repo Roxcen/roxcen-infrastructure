@@ -24,6 +24,11 @@ output "dev_rds_endpoint" {
   value       = var.create_dev_rds ? module.rds_dev[0].db_endpoint : null
 }
 
+output "dev_rds_security_group_id" {
+  description = "Development RDS security group ID"
+  value       = var.create_dev_rds ? module.rds_dev[0].db_security_group_id : null
+}
+
 output "dev_rds_credentials_secret_arn" {
   description = "Development RDS credentials secret ARN"
   value       = var.create_dev_rds ? module.rds_dev[0].db_credentials_secret_arn : null
@@ -32,6 +37,11 @@ output "dev_rds_credentials_secret_arn" {
 output "prod_rds_endpoint" {
   description = "Production RDS instance endpoint"
   value       = var.create_prod_rds ? module.rds_prod[0].db_endpoint : null
+}
+
+output "prod_rds_security_group_id" {
+  description = "Production RDS security group ID"
+  value       = var.create_prod_rds ? module.rds_prod[0].db_security_group_id : null
 }
 
 output "prod_rds_credentials_secret_arn" {
